@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const EmploymentSchema = new Schema({
+    profile: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Profile'
+    },
     jobTitle: {
         type: String,
         required: true

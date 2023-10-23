@@ -9,7 +9,7 @@ const Employment = require('../../models/Employment');
 // @access  Punlic
 router.get('/:id', async (req, res) => {
     try {
-        const posts = await Employment.findOne({ _id: req.params.id });
+        const posts = await Employment.find({ profile: req.params.id });
         res.json(posts);
     } catch (error) {
         console.error(error.message);
@@ -17,10 +17,10 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// @route   POST api/employment
+// @route   POST api/employment/:id
 // @desc    Create a employment
 // @access  Public
-router.post('/', [[
+router.post('/:id', [[
     check('jobTitle', 'Job Title is required').not().isEmpty(),
     check('employer', 'Employer is required').not().isEmpty(),
     check('startDate', 'Start Date is required').not().isEmpty(),
@@ -35,6 +35,7 @@ router.post('/', [[
 
     try {
         const newEmployment = new Employment({
+            profile: req.params.id,
             jobTitle: req.body.jobTitle,
             employer: req.body.employer,
             startDate: req.body.startDate,
@@ -51,40 +52,32 @@ router.post('/', [[
     }
 });
 
-// @route   PUT api/employment/:id
-// @desc    Update a employment
+// @route   DELETE api/employment/:id
+// @desc    Delete a employment
 // @access  Public
-router.put('/:id', [[
-    check('jobTitle', 'Job Title is required').not().isEmpty(),
-    check('employer', 'Employer is required').not().isEmpty(),
-    check('startDate', 'Start Date is required').not().isEmpty(),
-    check('endDate', 'End Date is required').not().isEmpty(),
-    check('city', 'City is required').not().isEmpty()
-]], async(req, res) => {
+router.delete('/:id', async(req, res) => {
     try {
-        let checkEmployment = await Employment.findOne({ _id: req.params.id });
+        const employment = await Employment.findOne({
+            $and: [
+                { profile: req.params.id },
+                { _id: req.query.id }
+            ]
+        });
 
-        if (checkEmployment) {
-            const updatedEmployment = {
-                jobTitle: req.body.jobTitle,
-                employer: req.body.employer,
-                startDate: req.body.startDate,
-                endDate: req.body.endDate,
-                city: req.body.city
-            };
-
-            const employment = await Employment.findOneAndUpdate(
-                { _id: req.params.id }, 
-                { $set: updatedEmployment },
-                { new: true }
-            );
-
-            return res.json(employment);
+        if (!employment) {
+            return res.status(401).json({ msg: 'Employment not found' });
         }
 
-        res.status(404).send('Employment not found');
+        await employment.deleteOne();
+
+        res.json({ msg: 'Employment removed' });
     } catch (error) {
         console.error(error.message);
+
+        if(error.kind === 'ObjectId') {
+            return res.status(404).json({ msg: 'Employment not found' });
+        }
+
         res.status(500).send('Server Error');
     }
 });
