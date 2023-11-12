@@ -33,7 +33,7 @@ const profileSchema = new Schema({
         type: String
     },
     postalCode: {
-        type: String
+        type: Number
     },
     drivingLicense: {
         type: String
